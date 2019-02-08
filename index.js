@@ -9,22 +9,22 @@ let notes =
 		{
 			id: 1,
 			name: "Arto Hellas",
-			number: "045-1236543"
+			phone: "045-1236543"
 		},
 		{
 			id: 2,
 			name: "Arto Järvinen",
-			number: "041-21423123"
+			phone: "041-21423123"
 		},
 		{
 			id: 3,
 			name: "Lea Kutvonen",
-			number: "040-4323234"
+			phone: "040-4323234"
 		},
 		{
 			id: 4,
 			name: "Martti Tienari",
-			number: "09-784232"
+			phone: "09-784232"
 		}
 	]
 app.use(express.static('build'))
@@ -38,7 +38,7 @@ const generateId = () => {
 
 app.post('/api/persons', (request, response) => {
 	const body = request.body
-	if (body.name === undefined || body.number === undefined) {
+	if (body.name === undefined || body.phone === undefined) {
 		return response.status(400).json({
 			error: 'content missing'
 		})
@@ -53,7 +53,7 @@ app.post('/api/persons', (request, response) => {
 	const person = {
 		id: generateId(),
 		name: body.name,
-		number: body.number,
+		phone: body.phone,
 
 	}
 
@@ -67,7 +67,7 @@ app.get('/info', (req, res) => {
 })
 
 app.get('/api/persons/:id', (request, response) => {
-	const id = Number(request.params.id)
+	const id = phone(request.params.id)
 	const note = notes.find(note => note.id === id)
 	if (note) {
 		response.json(note)
@@ -77,7 +77,7 @@ app.get('/api/persons/:id', (request, response) => {
 })
 
 app.delete('/api/persons/:id', (request, response) => {
-	const id = Number(request.params.id)
+	const id = phone(request.params.id)
 	notes = notes.filter(note => note.id !== id)
 
 	response.status(204).end()
