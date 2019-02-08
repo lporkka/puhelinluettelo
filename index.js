@@ -67,7 +67,7 @@ app.get('/info', (req, res) => {
 })
 
 app.get('/api/persons/:id', (request, response) => {
-	const id = phone(request.params.id)
+	const id = request.params.id
 	const note = notes.find(note => note.id === id)
 	if (note) {
 		response.json(note)
@@ -77,7 +77,7 @@ app.get('/api/persons/:id', (request, response) => {
 })
 
 app.delete('/api/persons/:id', (request, response) => {
-	const id = phone(request.params.id)
+	const id = request.params.id
 	notes = notes.filter(note => note.id !== id)
 
 	response.status(204).end()
