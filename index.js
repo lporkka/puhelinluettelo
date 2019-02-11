@@ -1,53 +1,15 @@
+require('dotenv').config()
 const express = require('express')
 const app = express()
 const bodyParser = require('body-parser')
 var morgan = require('morgan')
 const cors = require('cors')
-const mongoose = require('mongoose')
+const Note = require('./models/note')
 
-const url =
-	`mongodb+srv://Lauri:${password}@cluster0-vmtnd.mongodb.net/puhelinluettelo?retryWrites=true`
-
-mongoose.connect(url, { useNewUrlParser: true })
-
-const noteSchema = new mongoose.Schema({
-	name: String,
-	phone: String,
-})
-
-const Note = mongoose.model('Note', noteSchema)
-
-let notes =
-	[
-		{
-			id: 1,
-			name: "Arto Hellas",
-			phone: "045-1236543"
-		},
-		{
-			id: 2,
-			name: "Arto Järvinen",
-			phone: "041-21423123"
-		},
-		{
-			id: 3,
-			name: "Lea Kutvonen",
-			phone: "040-4323234"
-		},
-		{
-			id: 4,
-			name: "Martti Tienari",
-			phone: "09-784232"
-		}
-	]
 app.use(express.static('build'))
 app.use(bodyParser.json())
 app.use(morgan('tiny'))
 app.use(cors())
-
-const generateId = () => {
-	return Math.floor(Math.random() * 10000000000)
-}
 
 app.post('/api/persons', (request, response) => {
 	const body = request.body
@@ -57,21 +19,19 @@ app.post('/api/persons', (request, response) => {
 		})
 	}
 
-	if (notes.map(note => note.name).includes(body.name)) {
-		return response.status(400).json({
-			error: 'name must beings unique'
-		})
-	}
-
-	const person = {
-		id: generateId(),
+	const note = new Note({
 		name: body.name,
-		phone: body.phone,
-
-	}
-
-	notes = notes.concat(person)
-	response.json(person)
+		phone: body.phone
+	})
+	Note.findOne({ name: body.name }).then(result => {
+		if (!result) {
+			note.save().then(savedNote => {
+				response.json(savedNote.toJSON())
+			})
+		} else {
+			return response.status(400).end()
+		}
+	})
 })
 
 app.get('/info', (req, res) => {
@@ -80,29 +40,52 @@ app.get('/info', (req, res) => {
 })
 
 app.get('/api/persons/:id', (request, response) => {
-	const id = Number(request.params.id)
-	const note = notes.find(note => note.id === id)
-	if (note) {
-		response.json(note)
-	} else {
+	Note.findById(request.params.id).then(note => {
+		response.json(note.toJSON())
+	}).catch(error => {
+		console.log(error)
 		response.status(404).end()
-	}
+	})
 })
 
 app.delete('/api/persons/:id', (request, response) => {
-	const id = Number(request.params.id)
-	notes = notes.filter(note => note.id !== id)
+	Note.findById(request.params.id).then(note => {
+		Note.deleteOne(note).then(note => {
+			response.status(200).end()
+		})
 
-	response.status(204).end()
+	}).catch(error => {
+		console.log(error)
+		response.status(400).end()
+	})
 })
 
 app.get('/api/persons', (req, res) => {
 	Note.find({}).then(notes => {
-		response.json(notes)
+		res.json(notes)
+	}).catch(error => {
+		res.send(error.message).status(404).end()
 	})
 })
 
-const PORT = process.env.PORT || 3001
+const unknownEndpoint = (request, response) => {
+	response.status(404).send({ error: 'unknown endpoint' })
+}
+app.use(unknownEndpoint)
+
+
+const errorHandler = (error, request, response, next) => {
+	console.error(error.message)
+
+	if (error.name === 'CastError' && error.kind == 'ObjectId') {
+		return response.status(400).send({ error: 'malformatted id' })
+	}
+
+	next(error)
+}
+app.use(errorHandler)
+
+const PORT = process.env.PORT
 app.listen(PORT, () => {
 	console.log(`Server running on port ${PORT}`)
 })
