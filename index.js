@@ -3,6 +3,19 @@ const app = express()
 const bodyParser = require('body-parser')
 var morgan = require('morgan')
 const cors = require('cors')
+const mongoose = require('mongoose')
+
+const url =
+	`mongodb+srv://Lauri:${password}@cluster0-vmtnd.mongodb.net/puhelinluettelo?retryWrites=true`
+
+mongoose.connect(url, { useNewUrlParser: true })
+
+const noteSchema = new mongoose.Schema({
+	name: String,
+	phone: String,
+})
+
+const Note = mongoose.model('Note', noteSchema)
 
 let notes =
 	[
@@ -84,7 +97,9 @@ app.delete('/api/persons/:id', (request, response) => {
 })
 
 app.get('/api/persons', (req, res) => {
-	res.json(notes)
+	Note.find({}).then(notes => {
+		response.json(notes)
+	})
 })
 
 const PORT = process.env.PORT || 3001
