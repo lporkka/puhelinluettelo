@@ -1,7 +1,2 @@
-POST http://localhost:3001/api/persons/
-Content-Type: application/json
+DELETE https://fathomless-meadow-41175.herokuapp.com/api/persons/2
 
-{
-    "name": "LP",
-    "number": "0345345435"
-}
